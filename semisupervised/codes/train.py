@@ -37,6 +37,17 @@ parser.add_argument('--cuda', type=bool, default=torch.cuda.is_available())
 parser.add_argument('--cpu', action='store_true', help='Ignore CUDA.')
 args = parser.parse_args()
 
+def rand_split(x, ps):
+    assert abs(sum(ps) - 1) < 1.0e-10
+
+    shuffled_x = np.random.permutation(x)
+    n = len(shuffled_x)
+    pr = lambda p: int(np.ceil(p*n))
+
+    cs = np.cumsum([0] + ps)
+
+    return tuple(shuffled_x[pr(cs[i]):pr(cs[i+1])] for i in range(len(ps)))
+
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 random.seed(args.seed)
@@ -50,9 +61,6 @@ opt = vars(args)
 net_file = opt['dataset'] + '/net.txt'
 label_file = opt['dataset'] + '/label.txt'
 feature_file = opt['dataset'] + '/feature.txt'
-train_file = opt['dataset'] + '/train.txt'
-dev_file = opt['dataset'] + '/dev.txt'
-test_file = opt['dataset'] + '/test.txt'
 
 vocab_node = loader.Vocab(net_file, [0, 1])
 vocab_label = loader.Vocab(label_file, [1])
@@ -69,12 +77,7 @@ graph.to_symmetric(opt['self_link_weight'])
 feature.to_one_hot(binary=True)
 adj = graph.get_sparse_adjacency(opt['cuda'])
 
-with open(train_file, 'r') as fi:
-    idx_train = [vocab_node.stoi[line.strip()] for line in fi]
-with open(dev_file, 'r') as fi:
-    idx_dev = [vocab_node.stoi[line.strip()] for line in fi]
-with open(test_file, 'r') as fi:
-    idx_test = [vocab_node.stoi[line.strip()] for line in fi]
+idx_train, idx_dev, idx_test = rand_split(opt['num_node'], [0.3,0.2,0.5])
 idx_all = list(range(opt['num_node']))
 
 inputs = torch.Tensor(feature.one_hot)
