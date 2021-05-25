@@ -6,12 +6,12 @@ import datetime
 
 opt = dict()
 
-opt['dataset'] = 'CiteSeer'
+opt['dataset'] = 'MRF-'
 opt['hidden_dim'] = 16
 opt['input_dropout'] = 0.5
 opt['dropout'] = 0
-opt['optimizer'] = 'rmsprop'
-opt['lr'] = 0.05
+opt['optimizer'] = 'adam'
+opt['lr'] = 0.01
 opt['decay'] = 5e-4
 opt['self_link_weight'] = 1.0
 opt['pre_epoch'] = 200

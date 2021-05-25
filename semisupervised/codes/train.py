@@ -12,8 +12,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+from utils import *
 from trainer import Trainer
 from gnn import GNNq, GNNp
+from torch_geometric.nn.conv.gcn_conv import gcn_norm
 import loader
 
 parser = argparse.ArgumentParser()
@@ -58,30 +60,42 @@ elif args.cuda:
 
 opt = vars(args)
 
-net_file = opt['dataset'] + '/net.txt'
-label_file = opt['dataset'] + '/label.txt'
-feature_file = opt['dataset'] + '/feature.txt'
+split = [0.3, 0.2, 0.5]
 
-vocab_node = loader.Vocab(net_file, [0, 1])
-vocab_label = loader.Vocab(label_file, [1])
-vocab_feature = loader.Vocab(feature_file, [1])
+if args.dataset == 'Cora':
+    data = load_citation('Cora', split=split)
+elif args.dataset == 'CiteSeer':
+    data = load_citation('CiteSeer', split=split)
+elif args.dataset == 'PubMed':
+    data = load_citation('PubMed', split=split)
+elif args.dataset == 'Coauthor_CS':
+    data = load_coauthor('CS', split=split)
+elif args.dataset == 'Coauthor_Physics':
+    data = load_coauthor('Physics', split=split)
+elif args.dataset == 'County_Facebook':
+    data = load_county_facebook(split=split)
+elif args.dataset == 'Sex':
+    data = load_sexual_interaction(split=split)
+elif args.dataset in ['Ising+', 'Ising-']:
+    data = load_ising(split=split, interaction=dataset[-1], dataset_id=np.random.randint(10))
+elif args.dataset in ['MRF+', 'MRF-']:
+    data = load_mrf(split=split, interaction=dataset[-1], dataset_id=np.random.randint(10))
+else:
+    raise Exception('unexpected dataset')
 
-opt['num_node'] = len(vocab_node)
-opt['num_feature'] = len(vocab_feature)
-opt['num_class'] = len(vocab_label)
+opt['num_node'] = data.x.shape[0]
+opt['num_feature'] = data.x.shape[1]
+opt['num_class'] = len(data.y.unique())
 
-graph = loader.Graph(file_name=net_file, entity=[vocab_node, 0, 1])
-label = loader.EntityLabel(file_name=label_file, entity=[vocab_node, 0], label=[vocab_label, 1])
-feature = loader.EntityFeature(file_name=feature_file, entity=[vocab_node, 0], feature=[vocab_feature, 1])
-graph.to_symmetric(opt['self_link_weight'])
-feature.to_one_hot(binary=True)
-adj = graph.get_sparse_adjacency(opt['cuda'])
+edge_index, edge_weight = gcn_norm(data.edge_index, num_nodes=opt['num_node'], add_self_loops=False)
+adj = torch.sparse.FloatTensor(edge_index, edge_weight, (opt['num_node'], opt['num_node']))
 
-idx_train, idx_dev, idx_test = rand_split(opt['num_node'], [0.3,0.2,0.5])
+idx_train, idx_dev, idx_test = rand_split(opt['num_node'], [0.3, 0.2, 0.5])
+idx_train, idx_dev, idx_test = idx_train.tolist(), idx_dev.tolist(), idx_test.tolist()
 idx_all = list(range(opt['num_node']))
 
-inputs = torch.Tensor(feature.one_hot)
-target = torch.LongTensor(label.itol)
+inputs = data.x
+target = data.y
 idx_train = torch.LongTensor(idx_train)
 idx_dev = torch.LongTensor(idx_dev)
 idx_test = torch.LongTensor(idx_test)
@@ -102,6 +116,7 @@ if opt['cuda']:
     target_q = target_q.cuda()
     inputs_p = inputs_p.cuda()
     target_p = target_p.cuda()
+    adj = adj.cuda()
 
 gnnq = GNNq(opt, adj)
 trainer_q = Trainer(opt, gnnq)

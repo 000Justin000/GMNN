@@ -6,7 +6,7 @@ import datetime
 
 opt = dict()
 
-opt['dataset'] = '../data/pubmed'
+opt['dataset'] = 'Pubmed'
 opt['hidden_dim'] = 16
 opt['input_dropout'] = 0.5
 opt['dropout'] = 0
