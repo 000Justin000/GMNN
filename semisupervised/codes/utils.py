@@ -140,3 +140,43 @@ def load_sexual_interaction(transform=None, split=[0.3, 0.2, 0.5]):
     data.edge_index, data.edge_weight, data.edge_rv = process_edge_index(num_nodes, data.edge_index, data.edge_weight if hasattr(data, 'edge_weight') else None)
 
     return data if (transform is None) else transform(data)
+
+
+def load_ising(transform=None, split=[0.3, 0.2, 0.5], interaction='+', dataset_id=0):
+    edge_index = torch.tensor((pd.read_csv('datasets/ising{}/adj'.format(interaction), sep='\t', header=None)-1).to_numpy().T)
+    features = torch.tensor(pd.read_csv('datasets/ising{}/coord'.format(interaction), sep='\t', header=None).to_numpy(), dtype=torch.float32)
+    labels = torch.tensor(pd.read_csv('datasets/ising{}/label'.format(interaction), sep='\t', header=None).to_numpy(), dtype=torch.int64)[:,dataset_id]
+    labels[labels == -1] = 0
+
+    num_nodes = features.shape[0]
+    train_idx, val_idx, test_idx = rand_split(num_nodes, split)
+    train_idx, val_idx, test_idx = torch.tensor(train_idx), torch.tensor(val_idx), torch.tensor(test_idx)
+
+    data = Data(x=features, y=labels, edge_index=edge_index)
+    data.train_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, train_idx, True)
+    data.val_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, val_idx, True)
+    data.test_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, test_idx, True)
+
+    data.edge_index, data.edge_weight, data.edge_rv = process_edge_index(num_nodes, data.edge_index, None)
+
+    return data if (transform is None) else transform(data)
+
+
+def load_mrf(transform=None, split=[0.3, 0.2, 0.5], interaction='+', dataset_id=0):
+    edge_index = torch.tensor((pd.read_csv('datasets/mrf{}/adj'.format(interaction), sep='\t', header=None)-1).to_numpy().T)
+    features = torch.tensor(pd.read_csv('datasets/mrf{}/coord'.format(interaction), sep='\t', header=None).to_numpy(), dtype=torch.float32)
+    labels = torch.tensor(pd.read_csv('datasets/mrf{}/label'.format(interaction), sep='\t', header=None).to_numpy(), dtype=torch.int64)[:,dataset_id]
+
+    num_nodes = features.shape[0]
+    train_idx, val_idx, test_idx = rand_split(num_nodes, split)
+    train_idx, val_idx, test_idx = torch.tensor(train_idx), torch.tensor(val_idx), torch.tensor(test_idx)
+
+    data = Data(x=features, y=labels, edge_index=edge_index)
+    data.train_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, train_idx, True)
+    data.val_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, val_idx, True)
+    data.test_mask = torch.zeros(num_nodes, dtype=torch.bool).scatter_(0, test_idx, True)
+
+    data.edge_index, data.edge_weight, data.edge_rv = process_edge_index(num_nodes, data.edge_index, None)
+
+    return data if (transform is None) else transform(data)
+
