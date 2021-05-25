@@ -77,9 +77,9 @@ elif args.dataset == 'County_Facebook':
 elif args.dataset == 'Sex':
     data = load_sexual_interaction(split=split)
 elif args.dataset in ['Ising+', 'Ising-']:
-    data = load_ising(split=split, interaction=dataset[-1], dataset_id=np.random.randint(10))
+    data = load_ising(split=split, interaction=args.dataset[-1], dataset_id=np.random.randint(10))
 elif args.dataset in ['MRF+', 'MRF-']:
-    data = load_mrf(split=split, interaction=dataset[-1], dataset_id=np.random.randint(10))
+    data = load_mrf(split=split, interaction=args.dataset[-1], dataset_id=np.random.randint(10))
 else:
     raise Exception('unexpected dataset')
 
