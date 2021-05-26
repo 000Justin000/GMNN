@@ -51,7 +51,6 @@ class EntityLabel(object):
             if n == -1:
                 continue
             self.itol[n] = l
-            print(line)
         fi.close()
 
 class EntityFeature(object):

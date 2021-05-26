@@ -7,7 +7,7 @@ import datetime
 opt = dict()
 
 opt['dataset'] = 'CiteSeer'
-opt['hidden_dim'] = 16
+opt['hidden_dim'] = 256
 opt['input_dropout'] = 0.5
 opt['dropout'] = 0
 opt['optimizer'] = 'rmsprop'

@@ -60,6 +60,8 @@ elif args.cuda:
 
 opt = vars(args)
 
+#! split = None
+
 split = [0.3, 0.2, 0.5]
 
 if args.dataset == 'Cora':
@@ -87,11 +89,12 @@ opt['num_node'] = data.x.shape[0]
 opt['num_feature'] = data.x.shape[1]
 opt['num_class'] = len(data.y.unique())
 
-edge_index, edge_weight = gcn_norm(data.edge_index, num_nodes=opt['num_node'], add_self_loops=False)
+edge_index, edge_weight = gcn_norm(data.edge_index, num_nodes=opt['num_node'], add_self_loops=True)
 adj = torch.sparse.FloatTensor(edge_index, edge_weight, (opt['num_node'], opt['num_node']))
 
-idx_train, idx_dev, idx_test = rand_split(opt['num_node'], [0.3, 0.2, 0.5])
-idx_train, idx_dev, idx_test = idx_train.tolist(), idx_dev.tolist(), idx_test.tolist()
+idx_train = data.train_mask.nonzero(as_tuple=False).view(-1)
+idx_dev = data.val_mask.nonzero(as_tuple=False).view(-1)
+idx_test = data.test_mask.nonzero(as_tuple=False).view(-1)
 idx_all = list(range(opt['num_node']))
 
 inputs = data.x
@@ -104,6 +107,9 @@ inputs_q = torch.zeros(opt['num_node'], opt['num_feature'])
 target_q = torch.zeros(opt['num_node'], opt['num_class'])
 inputs_p = torch.zeros(opt['num_node'], opt['num_class'])
 target_p = torch.zeros(opt['num_node'], opt['num_class'])
+
+#! inputs = inputs / inputs.sum(dim=-1, keepdim=True)
+
 
 if opt['cuda']:
     inputs = inputs.cuda()
