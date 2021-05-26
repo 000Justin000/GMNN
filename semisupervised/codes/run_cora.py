@@ -7,7 +7,6 @@ import datetime
 opt = dict()
 
 opt['dataset'] = 'Cora'
-opt['hidden_dim'] = 16
 opt['input_dropout'] = 0.5
 opt['dropout'] = 0
 opt['optimizer'] = 'rmsprop'
